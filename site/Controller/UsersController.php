@@ -26,14 +26,14 @@ class UsersController extends AppController {
                                                     )
                                     ),
             'loginRedirect' => "",
-            'logoutRedirect' => "",
+            'logoutRedirect' => array('controller' => 'users', 'action' => 'login'),
             'authorize' => array('Controller')
         )
     );
 
 	public function beforeFilter(){
         parent::beforeFilter();
-        $this->Auth->allow('admin_index', 'admin_view', 'admin_edit', 'admin_add', 'admin_delete', 'changepassword');
+        $this->Auth->allow('admin_index', 'admin_view', 'admin_edit', 'admin_add', 'admin_delete', 'changepassword', 'logout');
     }
 
 
@@ -150,9 +150,9 @@ class UsersController extends AppController {
 						$this->redirect(array('controller' => 'users', 'action' => 'changepassword', 'admin' => false));	
 						return;
 					}
-					
+
 					$name = $dataUser['User']['name'];
-					$this->Session->setFlash(__("Bienvenido $name!!!"));
+					$this->Session->setFlash(__('Bienvenido ' . $name . '!!!'));
 	                $this->redirect(array('controller' => 'pages', 'action' => 'home', 'admin' => false));
 	            } else {
 	            	#Login invalido
@@ -182,23 +182,58 @@ class UsersController extends AppController {
     }
 
     public function logout() {
-        $this->Session->destroy();
-        $this->redirect(array('controller' => 'users', 'action' => 'login', 'admin' => false));
+        $this->Auth->logout();
+		$this->redirect(array('controller' => 'users', 'action' => 'login', 'admin' => false));
     }
 
     public function changepassword() {
     	if ($this->request->is('post')) {
+    		#Verificamos si las contraseñas ingrsadas son iguales
     		if ($this->request->data['User']['nueva_pass'] == $this->request->data['User']['nueva_pass_r']) {
-    			$this->User->id = $this->Auth->user('id');
-				$dataPass = array('password' => AuthComponent::password($this->request->data['User']['nueva_pass']), 'first_login' => 0);
-				if ($this->User->save($dataPass, false)) {
-					$this->Session->setFlash(__('Contraseña actualizada correctamente..'));
-					$this->Auth->logout();
-        			$this->redirect(array('controller' => 'users', 'action' => 'login', 'admin' => true));
-				} else {
-					$this->Session->setFlash(__('La contraseña no ha sido actualizada, favor intentar nuevamente.'));
-				}
-				
+    			#Extraemos data de usuario segun id almacenado en componente autorización
+    			$dataUser = $this->User->findById($this->Auth->user('id'));
+
+    			#Variabbles a comparar
+    			$new_pass = AuthComponent::password($this->request->data['User']['nueva_pass']); 	#nueva contraseña(es cifrada)
+    			$current_pass =  $dataUser['User']['password'];										#contraseña actual
+    			$log_pass1 = $dataUser['User']['log_pass1'];										#contraseña anterior 1
+    			$log_pass2 = $dataUser['User']['log_pass2'];										#contraseña anterior 2
+    			$log_pass3 = $dataUser['User']['log_pass3'];										#contraseña anterior 3
+
+    			#Compara contraseña nueva con las registradas, si alguna coincide no actualiza
+    			if (
+    				$new_pass == $current_pass ||
+    				$new_pass == $log_pass1 ||
+    				$new_pass == $log_pass2 ||
+    				$new_pass == $log_pass3
+    				) {
+    				$this->Session->setFlash(__('Las contraseñas ingresada ya ha sido utilizada anteriormente, favor intentar nuevamente.'));
+    			} else {
+    			#Actualizamos los registros de contraseñas
+    				#60 dias mas de expiracion
+    				$fecha60mas = $final = date("Y-m-d H:i:s", strtotime("+2 month", time()));
+    				$dataPass = array(
+    								#Primero, pasamos log_pass2 a log_pass3, último log de contraseña(log_pass3) se "pierde"
+    								'log_pass3' => $log_pass2,
+    								#Segundo, pasamos log_pass1 a log_pass2
+    								'log_pass2' => $log_pass1,
+    								#Tercero, pasamos current_pass(contraseña actual) a los_pass1
+    								'log_pass1' => $current_pass,
+    								#Cuarto, actualizamos la actual contraseña con la nueva
+    								'password' => $new_pass,
+    								#Quinto, agregamos 60 dias mas al periodo de caducida
+    								'expire_pass' => $fecha60mas
+
+    							);
+    				$this->User->id = $this->Auth->user('id');
+	    			if ($this->User->save($dataPass, false)) {
+						$this->Session->setFlash(__('Contraseña actualizada correctamente..'));
+						$this->Auth->logout();
+	        			$this->redirect(array('controller' => 'users', 'action' => 'login', 'admin' => false));
+					} else {
+						$this->Session->setFlash(__('La contraseña no ha sido actualizada, favor intentar nuevamente.'));
+					}
+    			}
     		} else {
     			$this->Session->setFlash(__('Las contraseñas no coinciden, favor intentar nuevamente.'));
     		}

@@ -6,12 +6,8 @@
 		echo $this->Form->input('id');
 		echo $this->Form->input('name');
 		echo $this->Form->input('username');
-		echo $this->Form->input('password');
 		echo $this->Form->input('state');
 		echo $this->Form->input('attemp');
-		echo $this->Form->input('log_pass1');
-		echo $this->Form->input('log_pass2');
-		echo $this->Form->input('log_pass3');
 		echo $this->Form->input('expire_pass');
 	?>
 	</fieldset>
