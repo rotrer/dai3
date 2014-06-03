@@ -1,7 +1,7 @@
 dai3
 ====
 
-Trabajo realizado bajo framewrok [*CakePhp*](www.cakephp.org) para Desarrollo de aplicaciones en internet
+Trabajo realizado bajo framewrok [*CakePhp*](http://cakephp.org) para Desarrollo de aplicaciones en internet
 
 Para instalar se debe:
 
