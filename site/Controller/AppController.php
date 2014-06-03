@@ -22,4 +22,19 @@ App::uses('Controller', 'Controller');
  * @link		http://book.cakephp.org/2.0/en/controllers.html#the-app-controller
  */
 class AppController extends Controller {
+	public $components = array('Session', 'RequestHandler');
+
+	public function isAuthorized($user) {
+        // Admin can access every action
+        // if ($user['state'] === 'activo') {
+        //     return true;
+        // }
+
+        // // Default deny
+        // $this->Session->setFlash(__('Acceso no autorizado'));
+        // $this->Session->destroy();
+        // $this->redirect(array('controller' => 'users', 'action' => 'login', 'admin' => false));
+        // return false;
+    }
+    
 }
