@@ -1,0 +1,15 @@
+{
+    "name": "user-expired",
+    "repositories": [
+        {
+            "type": "pear",
+            "url": "http://pear.cakephp.org"
+        }
+    ],
+    "require": {
+        "cakephp/cakephp": ">=2.4.9"
+    },
+    "config": {
+        "vendor-dir": "Vendor/"
+    }
+}
